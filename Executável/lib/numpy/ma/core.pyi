@@ -1,4 +1,5 @@
-from typing import Any, List, TypeVar, Callable
+from collections.abc import Callable
+from typing import Any, TypeVar
 from numpy import ndarray, dtype, float64
 
 from numpy import (
@@ -23,7 +24,7 @@ from numpy.lib.function_base import (
 _ShapeType = TypeVar("_ShapeType", bound=Any)
 _DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
 
-__all__: List[str]
+__all__: list[str]
 
 MaskType = bool_
 nomask: bool_
@@ -275,7 +276,6 @@ class MaskedArray(ndarray[_ShapeType, _DType_co]):
     def sort(self, axis=..., kind=..., order=..., endwith=..., fill_value=...): ...
     def min(self, axis=..., out=..., fill_value=..., keepdims=...): ...
     # NOTE: deprecated
-    # def mini(self, axis=...): ...
     # def tostring(self, fill_value=..., order=...): ...
     def max(self, axis=..., out=..., fill_value=..., keepdims=...): ...
     def ptp(self, axis=..., out=..., fill_value=..., keepdims=...): ...
