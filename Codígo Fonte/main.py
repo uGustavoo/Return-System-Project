@@ -2150,7 +2150,6 @@ class Sobre(tk.Frame):
 
 # ______________________________ Inicialização do Sistema ______________________________ #
 
-# username = "Gustavo"
 if __name__ == '__main__':
     root = LoginApp()
     root.mainloop()
