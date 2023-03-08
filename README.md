@@ -1,2 +1,2 @@
 # Return-System-Project
-Sistema de Controle e Saída de Produtos
+Sistema de Controle de Entrada e Saída de Produtos

@@ -4,7 +4,7 @@ from cx_Freeze import setup, Executable
 build_exe_options = {
     "packages": ["os", "sqlite3", "pandas", "tkinter", "tkcalendar"],
     "includes": ["winsound"],
-    "include_files": ["DataBase/Return_System.db"]
+    "include_files": ["DataBase/", "Arquivos Excel/", "Imagens/", "Sons/"]
 }
 
 base = None
@@ -18,7 +18,7 @@ executables = [
 setup(
     name="Return System",
     version="1.0",
-    description="Controle e Entrada de Produtos",
+    description="Controle de Entrada e Saída de Produtos",
     options={"build_exe": build_exe_options},
     executables=executables
 )

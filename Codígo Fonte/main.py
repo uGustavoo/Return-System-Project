@@ -1,13 +1,13 @@
 import os
 import sqlite3
-import pandas as pd
 import tkinter as tk
+import winsound
+from datetime import datetime
 from tkinter import *
 from tkinter import ttk, messagebox
+import pandas as pd
 from PIL import ImageTk, Image
 from tkcalendar import DateEntry
-from datetime import datetime
-import winsound
 
 # ______________________________ Conexão com o Banco de Dados ______________________________ #
 
@@ -96,7 +96,7 @@ class Login(tk.Frame):
                                command=lambda: lcontroller.show_frame("Cadastro"))
         self.cadastro.place(x=180, y=5)
 
-        self.img = PhotoImage(file=r'Imagens/LOGO-NORTHCONNECT_menor.png')
+        self.img = PhotoImage(file=r'Imagens/logo_northconnect.png')
         Label(self, image=self.img, bg="white").place(x=122, y=95)
 
         # ______________________________ Campo para inserção de dados do usuário! ______________________________
@@ -246,7 +246,7 @@ class Cadastro(tk.Frame):
         self.cadastro.place(x=180, y=5)
         Frame(self.frame, width=90, height=4, bg="#c10f43").place(x=185, y=40)
 
-        self.img = PhotoImage(file=r'Imagens/LOGO-NORTHCONNECT_menor.png')
+        self.img = PhotoImage(file=r'Imagens/logo_northconnect.png')
         Label(self, image=self.img, bg="white").place(x=122, y=95)
 
         # ______________________________ Campo para inserção de dados do usuário! ______________________________
@@ -420,10 +420,12 @@ class App(tk.Tk):
         if page_name == "MainSystem":
             frame.popular_entrada_saida()
             frame.atualizar_resultados()
+            frame.auto_foco()
 
         if page_name == "Saida":
             frame.popular_entrada_saida()
             frame.atualizar_resultados()
+            frame.auto_foco()
 
         if page_name == "Historico":
             frame.show_frame_historico()
@@ -760,7 +762,7 @@ class MainSystem(tk.Frame):
 
         if serial_produto == serial_caixa:
             if modelo == "modelo não\nencontrado":
-                winsound.PlaySound("Songs/erro.wav", winsound.SND_ASYNC)
+                winsound.PlaySound("Sons/erro.wav", winsound.SND_ASYNC)
                 self.label_condicao.config(text="MODELO NÃO\nENCONTRADO", foreground="red", width=12,
                                            font=('Calibri', 24, 'bold'))
                 self.label_resultado_modelo.configure(text="--------")
@@ -778,7 +780,7 @@ class MainSystem(tk.Frame):
                 total_modelos_diario = dql(pesquisa_total_modelos)[0][0] + 1
 
                 if result_serial[0][0] > 0:
-                    winsound.PlaySound("Songs/erro.wav", winsound.SND_ASYNC)
+                    winsound.PlaySound("Sons/erro.wav", winsound.SND_ASYNC)
                     self.label_condicao.config(text="SERIAL JÁ\nEXISTE", foreground="orange", width=12,
                                                font=('Calibri', 24, 'bold'))
                     self.label_resultado_modelo.configure(text="--------")
@@ -786,7 +788,7 @@ class MainSystem(tk.Frame):
                     self.label_resultado_usuario.configure(text="--------")
                     self.label_resultado_total.configure(text="--------")
                 else:
-                    winsound.PlaySound("Songs/ok.wav", winsound.SND_ASYNC)
+                    winsound.PlaySound("Sons/ok.wav", winsound.SND_ASYNC)
                     self.label_condicao.config(text="OK", foreground="green", width=10, font=('Calibri', 28, 'bold'))
                     self.label_resultado_modelo.configure(text=f"{modelo}")
                     self.label_resultado_partnumber.configure(text=f"{part_number}")
@@ -808,7 +810,7 @@ class MainSystem(tk.Frame):
                     self.atualizar_resultados()
 
         elif serial_produto != serial_caixa:
-            winsound.PlaySound("Songs/erro.wav", winsound.SND_ASYNC)
+            winsound.PlaySound("Sons/erro.wav", winsound.SND_ASYNC)
             self.label_condicao.config(text="SERIAL\nDIFERENTE", foreground="#14b6f1", width=10,
                                        font=('Calibri', 28, 'bold'))
             self.label_resultado_modelo.configure(text="--------")
@@ -863,6 +865,9 @@ class MainSystem(tk.Frame):
             pendentes += 1
         self.concluido_resultado.configure(text=str(concluidos))
         self.pendentes_resultado.configure(text=str(pendentes))
+
+    def auto_foco(self):
+        self.entry_produto.focus_set()
 
 
 class Saida(tk.Frame):
@@ -1132,7 +1137,7 @@ class Saida(tk.Frame):
 
         if serial_produto == serial_caixa:
             if modelo == "modelo não\nencontrado":
-                winsound.PlaySound("Songs/erro.wav", winsound.SND_ASYNC)
+                winsound.PlaySound("Sons/erro.wav", winsound.SND_ASYNC)
                 self.label_condicao.config(text="MODELO NÃO\nENCONTRADO", foreground="red", width=12,
                                            font=('Calibri', 24, 'bold'))
                 self.label_resultado_modelo.configure(text="--------")
@@ -1154,7 +1159,7 @@ class Saida(tk.Frame):
                 total_modelos_diario = dql(pesquisa_total_modelos)[0][0] + 1
 
                 if result_serial[0][0] > 0:
-                    winsound.PlaySound("Songs/erro.wav", winsound.SND_ASYNC)
+                    winsound.PlaySound("Sons/erro.wav", winsound.SND_ASYNC)
                     self.label_condicao.config(text="SERIAL JÁ\nEXISTE", foreground="orange", width=12,
                                                font=('Calibri', 24, 'bold'))
                     self.label_resultado_modelo.configure(text=f"{modelo}")
@@ -1162,7 +1167,7 @@ class Saida(tk.Frame):
                     self.label_resultado_usuario.configure(text="--------")
                     self.label_resultado_total.configure(text="--------")
                 elif result_serial2[0][0] == 0:
-                    winsound.PlaySound("Songs/erro.wav", winsound.SND_ASYNC)
+                    winsound.PlaySound("Sons/erro.wav", winsound.SND_ASYNC)
                     self.label_condicao.config(text="SERIAL SEM\n ENTRADA", foreground="red", width=12,
                                                font=('Calibri', 24, 'bold'))
                     self.label_resultado_modelo.configure(text="--------")
@@ -1170,7 +1175,7 @@ class Saida(tk.Frame):
                     self.label_resultado_usuario.configure(text="--------")
                     self.label_resultado_total.configure(text="--------")
                 else:
-                    winsound.PlaySound("Songs/ok.wav", winsound.SND_ASYNC)
+                    winsound.PlaySound("Sons/ok.wav", winsound.SND_ASYNC)
                     self.label_condicao.config(text="OK", foreground="green", width=10, font=('Calibri', 28, 'bold'))
                     self.label_resultado_modelo.configure(text=f"{modelo}")
                     self.label_resultado_partnumber.configure(text=f"{part_number}")
@@ -1203,7 +1208,7 @@ class Saida(tk.Frame):
                         dml(input_usuario)
 
         elif serial_produto != serial_caixa:
-            winsound.PlaySound("Songs/erro.wav", winsound.SND_ASYNC)
+            winsound.PlaySound("Sons/erro.wav", winsound.SND_ASYNC)
             self.label_condicao.config(text="SERIAL\nDIFERENTE", foreground="#14b6f1", width=10,
                                        font=('Calibri', 28, 'bold'))
             self.label_resultado_modelo.configure(text="--------")
@@ -1257,6 +1262,9 @@ class Saida(tk.Frame):
             pendentes += 1
         self.concluido_resultado.configure(text=str(concluidos))
         self.pendentes_resultado.configure(text=str(pendentes))
+
+    def auto_foco(self):
+        self.entry_produto.focus_set()
 
 
 class Status(tk.Frame):
