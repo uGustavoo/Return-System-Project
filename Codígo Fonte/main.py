@@ -11,10 +11,10 @@ from tkcalendar import DateEntry
 
 # ______________________________ Conexão com o Banco de Dados ______________________________ #
 
-db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "DataBase/Return_System.db")
+db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Database/Return_System.db")
 conn = sqlite3.connect(db_path)
 
-DATABASE_PATH = os.path.join(os.path.dirname(__file__), "DataBase/Return_System.db")
+DATABASE_PATH = os.path.join(os.path.dirname(__file__), "Database/Return_System.db")
 
 
 def execute_query(query, args=(), fetchall=False):
@@ -37,7 +37,7 @@ def lgn(query):  # login
     return execute_query(query)
 
 
-# ______________________________ Classes de Login ______________________________ #
+# ______________________________ Classes de Login e Recuperação ______________________________ #
 
 class LoginApp(tk.Tk):
     WINDOW_WIDTH = 960
@@ -61,7 +61,7 @@ class LoginApp(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
 
         self.frames = {}
-        for Page in (Login, Cadastro):
+        for Page in (Login, Cadastro, Verificacao, Atualizar_Senha, Concluido):
             page_name = Page.__name__
             frame = Page(lparent=container, lcontroller=self)
             self.frames[page_name] = frame
@@ -71,9 +71,11 @@ class LoginApp(tk.Tk):
 
         self.show_frame(Login.__name__)
 
-    def show_frame(self, page_name):
+    def show_frame(self, page_name, nome=None):
         frame = self.frames[page_name]
         frame.tkraise()
+        if nome:
+            frame.set_nome(nome)
 
 
 class Login(tk.Frame):
@@ -122,15 +124,17 @@ class Login(tk.Frame):
         # ______________________________ Campo para inserção da senha do usuário! ______________________________
 
         def on_enter(e):
-            if self.senha.get() == 'Senha':
+            if self.senha.get() == "Senha":
                 self.senha.delete(0, "end")
+                self.senha.config(show="*")
 
         def on_leave(e):
             senha = self.senha.get()
             if senha == "":
                 self.senha.insert(0, "Senha")
+                self.senha.config(show="")
 
-        self.senha = Entry(self.frame, width=35, fg='black', border=0, bg='white', show="*",
+        self.senha = Entry(self.frame, width=35, fg='black', border=0, bg='white', show="",
                            font=('Microsoft YaHei UI Light', 11))
         self.senha.place(x=30, y=150)
         self.senha.insert(0, 'Senha')
@@ -142,19 +146,26 @@ class Login(tk.Frame):
 
         # ______________________________ Botões de Registro ______________________________
 
+        self.botao_esqueceu_senha = Button(self.frame, width=15, text='Esqueceu a senha?', border=0, bg='white',
+                                           cursor='hand2', fg='gray',
+                                           command=lambda: lcontroller.show_frame("Esqueceu_Senha"),
+                                           activebackground="white", activeforeground="black")
+        self.botao_esqueceu_senha.place(x=215, y=190)
+
         self.botao_entrar = Button(self.frame, width=39, pady=7, text='Entrar', bg='#c10f43', fg='white',
                                    cursor='hand2', border=0, command=self.entrar_login,
                                    activebackground="#9d0031", activeforeground="black")
-        self.botao_entrar.place(x=30, y=205)
+        self.botao_entrar.place(x=30, y=225)
 
-        self.label = Label(self.frame, text="Não tem um perfil?", fg='black', bg='white',
-                           font=('Microsoft YaHei UI Light', 9), activebackground="white", activeforeground="black")
-        self.label.place(x=75, y=270)
+        self.label_nao_perfil = Label(self.frame, text="Não tem um perfil?", fg='black', bg='white',
+                                      font=('Microsoft YaHei UI Light', 9), activebackground="white",
+                                      activeforeground="black")
+        self.label_nao_perfil.place(x=75, y=280)
 
         self.registrar = Button(self.frame, width=9, text='Cadastrar-se', border=0, bg='white', cursor='hand2',
                                 fg='#57a1f8', command=lambda: lcontroller.show_frame("Cadastro"),
                                 activebackground="white", activeforeground="black")
-        self.registrar.place(x=195, y=270)
+        self.registrar.place(x=195, y=280)
 
     # ______________________________ Funções de Login e Senha ______________________________
 
@@ -168,7 +179,7 @@ class Login(tk.Frame):
                 messagebox.showinfo(title='Credenciais Vazias', message='Por favor, preencha os campos solicitados')
                 return
 
-            dados = lgn(comando)
+            dados = execute_query(comando)
             nome = dados[1]
             senha = dados[2]
 
@@ -201,7 +212,7 @@ class Login(tk.Frame):
                 messagebox.showinfo(title='Credenciais Vazias', message='Por favor, preencha os campos solicitados')
                 return
 
-            dados = lgn(comando)
+            dados = execute_query(comando)
             nome = dados[1]
             senha = dados[2]
 
@@ -312,15 +323,17 @@ class Cadastro(tk.Frame):
         # ______________________________ Campo para inserção da senha do usuário ______________________________
 
         def on_enter(e):
-            if self.senha.get() == 'Senha':
+            if self.senha.get() == "Senha":
                 self.senha.delete(0, "end")
+                self.senha.config(show="*")
 
         def on_leave(e):
             senha = self.senha.get()
             if senha == "":
                 self.senha.insert(0, "Senha")
+                self.senha.config(show="")
 
-        self.senha = Entry(self.frame, width=35, fg='black', border=0, bg='white', show="*",
+        self.senha = Entry(self.frame, width=35, fg='black', border=0, bg='white',
                            font=('Microsoft YaHei UI Light', 11))
         self.senha.place(x=30, y=290)
         self.senha.insert(0, 'Senha')
@@ -335,15 +348,15 @@ class Cadastro(tk.Frame):
                command=self.registrar, activebackground="#9d0031", activeforeground="black").place(x=35, y=344)
         self.label = Label(self.frame, text="Já possui um perfil?", fg='black', bg='white',
                            font=('Microsoft YaHei UI Light', 9))
-        self.label.place(x=75, y=410)
+        self.label.place(x=75, y=397)
 
         self.registrar = Button(self.frame, width=9, text='Logar-se', border=0, bg='white', cursor='hand2',
                                 fg='#57a1f8', command=lambda: lcontroller.show_frame("Login"),
                                 activebackground="white", activeforeground="black")
-        self.registrar.place(x=195, y=410)
+        self.registrar.place(x=195, y=397)
 
     agora = datetime.now()
-    agora_str = agora.strftime("%d/%m/%Y")
+    agora_str = agora.strftime("%Y-%m-%d")
 
     # Funções
 
@@ -357,6 +370,7 @@ class Cadastro(tk.Frame):
                            '{self.email.get()}', '{self.agora_str}')"""
 
             dml(input_usuario)
+            messagebox.showinfo(title=f'Olá, {self.usuario.get()}', message='Cadastro realizado com sucesso!')
             self.lcontroller.show_frame("Login")
 
         except TypeError:
@@ -372,6 +386,244 @@ class Cadastro(tk.Frame):
                 self.usuario.focus()
         except TclError:
             pass
+
+
+class Verificacao(tk.Frame):
+    def __init__(self, lparent, lcontroller):
+        tk.Frame.__init__(self, lparent)
+        self.lcontroller = lcontroller
+        self.nome = None
+
+        # ______________________________ Título e Texto ______________________________
+
+        Frame(self, width=960, height=50, bg="black").place(x=0, y=0)
+
+        self.frame = Frame(self, width=450, height=450, bg="white")
+        self.frame.place(x=275, y=85)
+
+        self.label_titulo = Label(self.frame, text="VERIFICAÇÃO", fg='black', border=0, bg='white',
+                                  font=('calibri', 21, 'bold'), activebackground="white", activeforeground="black")
+        self.label_titulo.place(x=136, y=20)
+        Frame(self.frame, width=304, height=3, bg="#c10f43").place(x=70, y=60)
+
+        self.label_texto = Label(self.frame,
+                                 text="Insira o código que foi enviado ao seu E-mail\n no campo abaixo:",
+                                 fg='black', border=0, bg='white', font=('calibri', 12),
+                                 activebackground="white", activeforeground="black")
+        self.label_texto.place(x=70, y=85)
+
+        # ______________________________ Campo para inserção do Código ______________________________
+
+        def on_enter(e):
+            if self.codigo.get() == "Código":
+                self.codigo.delete(0, "end")
+
+        def on_leave(e):
+            nome = self.codigo.get()
+            if nome == "":
+                self.codigo.insert(0, "Código")
+
+        self.codigo = Entry(self.frame, width=35, fg='black', border=0, bg='white',
+                            font=('Microsoft YaHei UI Light', 11))
+        self.codigo.place(x=75, y=165)
+        self.codigo.insert(0, 'Código')
+        self.codigo.bind('<FocusIn>', on_enter)
+        self.codigo.bind('<FocusOut>', on_leave)
+        self.codigo.bind('<Return>', self.valid_token_enter)
+
+        Frame(self.frame, width=295, height=2, bg="black").place(x=70, y=192)
+
+        # ______________________________ Botões e Actives ______________________________
+
+        self.botao_verificar = Button(self.frame, width=39, pady=7, text='Verificar', bg='#c10f43', fg='white',
+                                      border=0, cursor='hand2', command=self.valid_token, activebackground="#9d0031",
+                                      activeforeground="black")
+        self.botao_verificar.place(x=77, y=265)
+
+        self.botao_voltar = Button(self.frame, width=10, text='< Retornar', border=0, bg='white',
+                                   cursor='hand2', fg='gray', command=lambda: lcontroller.show_frame("Esqueceu_Senha"),
+                                   activebackground="white", activeforeground="black")
+        self.botao_voltar.place(x=64, y=208)
+
+    def set_nome(self, nome):
+        self.nome = nome
+
+    def valid_token(self):
+        try:
+            codigo_obtido = self.codigo.get()
+
+            comando4 = f"SELECT reset_token FROM return_system.usuarios WHERE usuario = '{self.nome}'"
+            codigo_registrado = dql(comando4)[0][0]
+
+            if codigo_registrado == codigo_obtido:
+                self.lcontroller.show_frame("Atualizar_Senha", self.nome)
+            else:
+                messagebox.showinfo(title='Código que você inseriu é inválido',
+                                    message='Por favor, verifique se digitou '
+                                            'corretamente e tente novamente.')
+                return
+        except IndexError:
+            messagebox.showinfo(title='Erro',
+                                message='Algo deu errado, tente novamente.')
+
+    def valid_token_enter(self, event):
+        try:
+            codigo_obtido = self.codigo.get()
+
+            comando4 = f"SELECT reset_token FROM return_system.usuarios WHERE usuario = '{self.nome}'"
+            codigo_registrado = dql(comando4)[0][0]
+
+            if codigo_registrado == codigo_obtido:
+                self.lcontroller.show_frame("Atualizar_Senha", self.nome)
+            else:
+                messagebox.showinfo(title='Código que você inseriu é inválido',
+                                    message='Por favor, verifique se digitou '
+                                            'corretamente e tente novamente.')
+                return
+        except IndexError:
+            messagebox.showinfo(title='Erro',
+                                message='Algo deu errado, tente novamente.')
+
+
+class Atualizar_Senha(tk.Frame):
+    def __init__(self, lparent, lcontroller):
+        tk.Frame.__init__(self, lparent)
+        self.lcontroller = lcontroller
+        self.nome = ''
+
+        # ______________________________ Título e Texto ______________________________
+
+        Frame(self, width=960, height=50, bg="black").place(x=0, y=0)
+
+        self.frame = Frame(self, width=450, height=450, bg="white")
+        self.frame.place(x=275, y=85)
+
+        self.label_titulo = Label(self.frame, text="NOVAS CREDENCIAIS", fg='black', border=0, bg='white',
+                                  font=('calibri', 21, 'bold'), activebackground="white", activeforeground="black")
+        self.label_titulo.place(x=100, y=20)
+        Frame(self.frame, width=304, height=3, bg="#c10f43").place(x=70, y=60)
+
+        self.label_texto = Label(self.frame,
+                                 text="O código foi verificado!\nDefina sua nova senha",
+                                 fg='black', border=0, bg='white', font=('calibri', 12),
+                                 activebackground="white", activeforeground="black")
+        self.label_texto.place(x=140, y=85)
+
+        # ______________________________ Campo para inserção da nova Senha ______________________________ #
+
+        def on_enter(e):
+            if self.senha1.get() == "Nova Senha":
+                self.senha1.delete(0, "end")
+                self.senha1.config(show="*")
+
+        def on_leave(e):
+            senha = self.senha1.get()
+            if senha == "":
+                self.senha1.insert(0, "Nova Senha")
+                self.senha1.config(show="")
+
+        self.senha1 = Entry(self.frame, width=24, fg='black', border=0, bg='white',
+                            font=('Microsoft YaHei UI Light', 11))
+        self.senha1.place(x=70, y=150)
+        self.senha1.insert(0, 'Nova Senha')
+        self.senha1.bind('<FocusIn>', on_enter)
+        self.senha1.bind('<FocusOut>', on_leave)
+
+        Frame(self.frame, width=295, height=2, bg="black").place(x=65, y=177)
+
+        # ______________________________ Campo para inserção para confirmar nova Senha ______________________________ #
+
+        def on_enter(e):
+            if self.senha2.get() == "Confirmar Senha":
+                self.senha2.delete(0, "end")
+                self.senha2.config(show="*")
+
+        def on_leave(e):
+            senha = self.senha2.get()
+            if senha == "":
+                self.senha2.insert(0, "Confirmar Senha")
+                self.senha2.config(show="")
+
+        self.senha2 = Entry(self.frame, width=21, fg='black', border=0, bg='white',
+                            font=('Microsoft YaHei UI Light', 11))
+        self.senha2.place(x=70, y=220)
+        self.senha2.insert(0, 'Confirmar Senha')
+        self.senha2.bind('<FocusIn>', on_enter)
+        self.senha2.bind('<FocusOut>', on_leave)
+        self.senha2.bind('<Return>', self.confirmar)
+
+        Frame(self.frame, width=295, height=2, bg="black").place(x=65, y=247)
+
+        # ______________________________ Botões e Actives ______________________________
+
+        self.botao_confirmar = Button(self.frame, width=39, pady=7, text='Confirmar', bg='#c10f43', fg='white',
+                                      border=0, cursor='hand2', command=self.confirmar_senha,
+                                      activebackground="#9d0031",
+                                      activeforeground="black")
+        self.botao_confirmar.place(x=77, y=280)
+
+    def set_nome(self, nome):
+        self.nome = nome
+
+    def confirmar_senha(self):
+        try:
+            senha1 = self.senha1.get()
+            senha2 = self.senha2.get()
+            if senha1 == senha2:
+                comando = f"UPDATE return_system.usuarios SET senha = '{senha2}' WHERE usuario = '{self.nome}';"
+                comando2 = f"UPDATE return_system.usuarios SET reset_token = NULL WHERE usuario = '{self.nome}';"
+                dml(comando)
+                dml(comando2)
+                self.lcontroller.show_frame('Concluido')
+            else:
+                messagebox.showinfo(title='Erro', message='As senhas não coincidem. Por favor, tente novamente.')
+        except TypeError:
+            print('Ocorreu algum erro!')
+
+    def confirmar(self, event):
+        try:
+            senha1 = self.senha1.get()
+            senha2 = self.senha2.get()
+            if senha1 == senha2:
+                comando = f"UPDATE return_system.usuarios SET senha = '{senha2}' WHERE usuario = '{self.nome}';"
+                comando2 = f"UPDATE return_system.usuarios SET reset_token = NULL WHERE usuario = '{self.nome}';"
+                dml(comando)
+                dml(comando2)
+                self.lcontroller.show_frame('Concluido')
+            else:
+                messagebox.showinfo(title='Erro', message='As senhas não coincidem. Por favor, tente novamente.')
+        except TypeError:
+            print('Ocorreu algum erro!')
+
+
+class Concluido(tk.Frame):
+    def __init__(self, lparent, lcontroller):
+        tk.Frame.__init__(self, lparent)
+        self.lcontroller = lcontroller
+
+        # ______________________________ Título e Texto ______________________________ #
+
+        Frame(self, width=960, height=50, bg="black").place(x=0, y=0)
+
+        self.frame = Frame(self, width=450, height=450, bg="white")
+        self.frame.place(x=275, y=85)
+
+        self.label_titulo = Label(self.frame, text="SENHA ATUALIZADA", fg='black', border=0, bg='white',
+                                  font=('calibri', 21, 'bold'), activebackground="white", activeforeground="black")
+        self.label_titulo.place(x=103, y=20)
+        Frame(self.frame, width=304, height=3, bg="#c10f43").place(x=70, y=60)
+
+        self.label_texto = Label(self.frame,
+                                 text="Sua senha foi alterada\ncom sucesso!", fg='black', border=0, bg='white',
+                                 font=('calibri', 15), activebackground="white", activeforeground="black")
+        self.label_texto.place(x=122, y=132)
+
+        # ______________________________ Botões ______________________________ #
+
+        self.botao_login = Button(self.frame, width=39, pady=7, text='LOGIN', bg='#c10f43', fg='white',
+                                  border=0, cursor='hand2', command=lambda: lcontroller.show_frame('Login'),
+                                  activebackground="#9d0031", activeforeground="black")
+        self.botao_login.place(x=77, y=265)
 
 
 # ______________________________ Classes do Sistema Principal ______________________________ #
@@ -538,25 +790,25 @@ class MainSystem(tk.Frame):
         self.frame_scanner = Frame(self, width=853, height=653, background="white")
         self.frame_scanner.place(x=0, y=115)
 
-        self.label_produto = Label(self.frame_scanner, width=9, fg='#636363', border=0, bg='white', anchor=W,
-                                   text="PRODUTO:", font=('Calibri', 14, 'bold'))
-        self.label_produto.place(x=65, y=60)
+        self.label_caixa = Label(self.frame_scanner, width=4, fg='#636363', border=0, bg='white', anchor=W,
+                                 text="BOX:", font=('Calibri', 14, 'bold'))
+        self.label_caixa.place(x=65, y=60)
 
-        self.entry_produto = Entry(self.frame_scanner, width=26, fg='black', border=0, bg='white',
-                                   font=('Calibri', 14, 'bold'))
-        self.entry_produto.place(x=155, y=60)
-        self.entry_produto.bind("<Return>", self.proximo_entry)
+        self.entry_caixa = Entry(self.frame_scanner, width=27, fg='black', border=0, bg='white',
+                                 font=('Calibri', 14, 'bold'))
+        self.entry_caixa.place(x=110, y=60)
+        self.entry_caixa.bind("<Return>", self.proximo_entry)
 
         Frame(self.frame_scanner, width=320, height=2, bg="black").place(x=65, y=90)
 
-        self.label_caixa = Label(self.frame_scanner, width=6, fg='#636363', border=0, bg='white', anchor=W,
-                                 text="CAIXA:", font=('Calibri', 14, 'bold'))
-        self.label_caixa.place(x=475, y=60)
+        self.label_produto = Label(self.frame_scanner, width=10, fg='#636363', border=0, bg='white', anchor=W,
+                                   text="QUALITY:", font=('Calibri', 14, 'bold'))
+        self.label_produto.place(x=475, y=60)
 
-        self.entry_caixa = Entry(self.frame_scanner, width=26, fg='black', border=0, bg='white',
-                                 font=('Calibri', 14, 'bold'))
-        self.entry_caixa.place(x=535, y=60)
-        self.entry_caixa.bind("<Return>", self.verificar_codigo)
+        self.entry_produto = Entry(self.frame_scanner, width=24, fg='black', border=0, bg='white',
+                                   font=('Calibri', 14, 'bold'))
+        self.entry_produto.place(x=555, y=60)
+        self.entry_produto.bind("<Return>", self.verificar_codigo)
 
         Frame(self.frame_scanner, width=320, height=2, bg="black").place(x=475, y=90)
 
@@ -584,13 +836,13 @@ class MainSystem(tk.Frame):
 
         Frame(self.frame_scanner, width=730, height=2, bg="#d0cece").place(x=65, y=400)
 
-        self.label_partnumber = Label(self.frame_scanner, width=14, fg='#636363', height=2, border=0, bg='white',
-                                      anchor=W, text="Part Number", font=('Calibri', 18))
-        self.label_partnumber.place(x=160, y=407)
+        self.label_serialnumber = Label(self.frame_scanner, width=14, fg='#636363', height=2, border=0, bg='white',
+                                        anchor=W, text="Serial Number", font=('Calibri', 18))
+        self.label_serialnumber.place(x=160, y=407)
 
-        self.label_resultado_partnumber = Label(self.frame_scanner, width=14, height=2, fg='#636363', border=0,
-                                                bg='white', text="--------", font=('Calibri', 18))
-        self.label_resultado_partnumber.place(x=538, y=407)
+        self.label_resultado_serialnumber = Label(self.frame_scanner, width=14, height=2, fg='#636363', border=0,
+                                                  bg='white', text="--------", font=('Calibri', 18))
+        self.label_resultado_serialnumber.place(x=538, y=407)
 
         Frame(self.frame_scanner, width=730, height=2, bg="#d0cece").place(x=65, y=470)
 
@@ -721,7 +973,7 @@ class MainSystem(tk.Frame):
             pass
 
     def atualizar_data_hora(self):
-        agora = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+        agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if self.data_hora:
             self.data_hora.config(text=agora)
             self.data_hora.after(1000, self.atualizar_data_hora)
@@ -745,14 +997,15 @@ class MainSystem(tk.Frame):
         serial_caixa = self.entry_caixa.get()
 
         part_number = (serial_caixa[15:])
+        serial_number = (serial_produto[10:15])
         operacao = "ENTRADA"
         nome = self.controller.username
 
         agora = datetime.now()
-        agora_str = agora.strftime("%d/%m/%Y %H:%M:%S")
-        emissao = agora.strftime("%d/%m/%Y")
+        agora_str = agora.strftime("%Y-%m-%d %H:%M:%S")
+        emissao = agora.strftime("%Y-%m-%d")
 
-        pesquisa_modelo = f"SELECT modelo FROM produtos WHERE part_number = '{part_number}';"
+        pesquisa_modelo = f"SELECT modelo FROM Produtos WHERE part_number = '{part_number}';"
         result_modelo = dql(pesquisa_modelo)
 
         if result_modelo:
@@ -766,14 +1019,13 @@ class MainSystem(tk.Frame):
                 self.label_condicao.config(text="MODELO NÃO\nENCONTRADO", foreground="red", width=12,
                                            font=('Calibri', 24, 'bold'))
                 self.label_resultado_modelo.configure(text="--------")
-                self.label_resultado_partnumber.configure(text="--------")
+                self.label_resultado_serialnumber.configure(text="--------")
                 self.label_resultado_usuario.configure(text="--------")
             else:
-                pesquisa_id = f"SELECT id FROM produtos WHERE modelo = '{result_modelo[0][0]}';"
+                pesquisa_id = f"SELECT id FROM Produtos WHERE modelo = '{result_modelo[0][0]}';"
                 result_id = dql(pesquisa_id)
 
-                pesquisa_serial = f"SELECT COUNT(*) FROM status WHERE serial_number = '{serial_caixa}' AND operacao = " \
-                                  f"'ENTRADA' "
+                pesquisa_serial = f"SELECT COUNT(*) FROM status WHERE serial_number = '{serial_caixa}' AND operacao = 'ENTRADA'"
                 result_serial = dql(pesquisa_serial)
 
                 pesquisa_total_modelos = f"SELECT COUNT(*) FROM status WHERE operacao = 'ENTRADA' AND emissao = '{emissao}';"
@@ -784,14 +1036,14 @@ class MainSystem(tk.Frame):
                     self.label_condicao.config(text="SERIAL JÁ\nEXISTE", foreground="orange", width=12,
                                                font=('Calibri', 24, 'bold'))
                     self.label_resultado_modelo.configure(text="--------")
-                    self.label_resultado_partnumber.configure(text="--------")
+                    self.label_resultado_serialnumber.configure(text="--------")
                     self.label_resultado_usuario.configure(text="--------")
                     self.label_resultado_total.configure(text="--------")
                 else:
                     winsound.PlaySound("Sons/ok.wav", winsound.SND_ASYNC)
                     self.label_condicao.config(text="OK", foreground="green", width=10, font=('Calibri', 28, 'bold'))
                     self.label_resultado_modelo.configure(text=f"{modelo}")
-                    self.label_resultado_partnumber.configure(text=f"{part_number}")
+                    self.label_resultado_serialnumber.configure(text=f"{serial_number}")
                     self.label_resultado_usuario.configure(textvariable=self.label_text)
                     self.label_resultado_total.configure(text=total_modelos_diario)
 
@@ -814,7 +1066,7 @@ class MainSystem(tk.Frame):
             self.label_condicao.config(text="SERIAL\nDIFERENTE", foreground="#14b6f1", width=10,
                                        font=('Calibri', 28, 'bold'))
             self.label_resultado_modelo.configure(text="--------")
-            self.label_resultado_partnumber.configure(text="--------")
+            self.label_resultado_serialnumber.configure(text="--------")
             self.label_resultado_usuario.configure(text="--------")
             self.label_resultado_total.configure(text="--------")
         else:
@@ -830,7 +1082,7 @@ class MainSystem(tk.Frame):
 
     def popular_entrada_saida(self):
         agora = datetime.now()
-        emissao = agora.strftime("%d/%m/%Y")
+        emissao = agora.strftime("%Y-%m-%d")
 
         self.tv.delete(*self.tv.get_children())
         comando = f"SELECT modelo, operacao FROM status WHERE emissao = '{emissao}';"
@@ -840,7 +1092,7 @@ class MainSystem(tk.Frame):
 
     def atualizar_resultados(self):
         agora = datetime.now()
-        emissao = agora.strftime("%d/%m/%Y")
+        emissao = agora.strftime("%Y-%m-%d")
         pesquisa = f"""SELECT serial_number, operacao FROM status WHERE emissao = '{emissao}' 
                     ORDER BY serial_number, operacao;"""
         resultado = dql(pesquisa)
@@ -867,7 +1119,7 @@ class MainSystem(tk.Frame):
         self.pendentes_resultado.configure(text=str(pendentes))
 
     def auto_foco(self):
-        self.entry_produto.focus_set()
+        self.entry_caixa.focus_set()
 
 
 class Saida(tk.Frame):
@@ -968,25 +1220,25 @@ class Saida(tk.Frame):
         self.frame_scanner = Frame(self, width=853, height=653, background="white")
         self.frame_scanner.place(x=513, y=115)
 
-        self.label_produto = Label(self.frame_scanner, width=9, fg='#636363', border=0, bg='white', anchor=W,
-                                   text="PRODUTO:", font=('Calibri', 14, 'bold'))
-        self.label_produto.place(x=65, y=60)
+        self.label_caixa = Label(self.frame_scanner, width=4, fg='#636363', border=0, bg='white', anchor=W,
+                                 text="BOX:", font=('Calibri', 14, 'bold'))
+        self.label_caixa.place(x=65, y=60)
 
-        self.entry_produto = Entry(self.frame_scanner, width=26, fg='black', border=0, bg='white',
-                                   font=('Calibri', 14, 'bold'))
-        self.entry_produto.place(x=155, y=60)
-        self.entry_produto.bind("<Return>", self.proximo_entry)
+        self.entry_caixa = Entry(self.frame_scanner, width=27, fg='black', border=0, bg='white',
+                                 font=('Calibri', 14, 'bold'))
+        self.entry_caixa.place(x=110, y=60)
+        self.entry_caixa.bind("<Return>", self.proximo_entry)
 
         Frame(self.frame_scanner, width=320, height=2, bg="black").place(x=65, y=90)
 
-        self.label_caixa = Label(self.frame_scanner, width=6, fg='#636363', border=0, bg='white', anchor=W,
-                                 text="CAIXA:", font=('Calibri', 14, 'bold'))
-        self.label_caixa.place(x=475, y=60)
+        self.label_produto = Label(self.frame_scanner, width=10, fg='#636363', border=0, bg='white', anchor=W,
+                                   text="QUALITY:", font=('Calibri', 14, 'bold'))
+        self.label_produto.place(x=475, y=60)
 
-        self.entry_caixa = Entry(self.frame_scanner, width=26, fg='black', border=0, bg='white',
-                                 font=('Calibri', 14, 'bold'))
-        self.entry_caixa.place(x=535, y=60)
-        self.entry_caixa.bind("<Return>", self.verificar_codigo)
+        self.entry_produto = Entry(self.frame_scanner, width=24, fg='black', border=0, bg='white',
+                                   font=('Calibri', 14, 'bold'))
+        self.entry_produto.place(x=555, y=60)
+        self.entry_produto.bind("<Return>", self.verificar_codigo)
 
         Frame(self.frame_scanner, width=320, height=2, bg="black").place(x=475, y=90)
 
@@ -1014,13 +1266,13 @@ class Saida(tk.Frame):
 
         Frame(self.frame_scanner, width=730, height=2, bg="#d0cece").place(x=65, y=400)
 
-        self.label_partnumber = Label(self.frame_scanner, width=14, fg='#636363', height=2, border=0, bg='white',
-                                      anchor=W, text="Part Number", font=('Calibri', 18))
-        self.label_partnumber.place(x=160, y=407)
+        self.label_serialnumber = Label(self.frame_scanner, width=14, fg='#636363', height=2, border=0, bg='white',
+                                        anchor=W, text="Serial Number", font=('Calibri', 18))
+        self.label_serialnumber.place(x=160, y=407)
 
-        self.label_resultado_partnumber = Label(self.frame_scanner, width=14, height=2, fg='#636363', border=0,
-                                                bg='white', text="--------", font=('Calibri', 18))
-        self.label_resultado_partnumber.place(x=538, y=407)
+        self.label_resultado_serialnumber = Label(self.frame_scanner, width=14, height=2, fg='#636363', border=0,
+                                                  bg='white', text="--------", font=('Calibri', 18))
+        self.label_resultado_serialnumber.place(x=538, y=407)
 
         Frame(self.frame_scanner, width=730, height=2, bg="#d0cece").place(x=65, y=470)
 
@@ -1097,7 +1349,7 @@ class Saida(tk.Frame):
     # ______________________________ Funções ______________________________ #
 
     def atualizar_data_hora(self):
-        agora = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+        agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if self.data_hora:
             self.data_hora.config(text=agora)
             self.data_hora.after(1000, self.atualizar_data_hora)
@@ -1120,14 +1372,15 @@ class Saida(tk.Frame):
         serial_produto = self.entry_produto.get()
         serial_caixa = self.entry_caixa.get()
 
-        part_number = (serial_caixa[15:])
+        part_number = (serial_produto[15:])
+        serial_number = (serial_produto[10:15])
         operacao = "SAÍDA"
         nome = self.controller.username
         agora = datetime.now()
-        agora_str = agora.strftime("%d/%m/%Y %H:%M:%S")
-        emissao = agora.strftime("%d/%m/%Y")
+        agora_str = agora.strftime("%Y-%m-%d %H:%M:%S")
+        emissao = agora.strftime("%Y-%m-%d")
 
-        pesquisa_modelo = f"SELECT modelo FROM produtos WHERE part_number = '{part_number}';"
+        pesquisa_modelo = f"SELECT modelo FROM Produtos WHERE part_number = '{part_number}';"
         result_modelo = dql(pesquisa_modelo)
 
         if result_modelo:
@@ -1141,10 +1394,10 @@ class Saida(tk.Frame):
                 self.label_condicao.config(text="MODELO NÃO\nENCONTRADO", foreground="red", width=12,
                                            font=('Calibri', 24, 'bold'))
                 self.label_resultado_modelo.configure(text="--------")
-                self.label_resultado_partnumber.configure(text="--------")
+                self.label_resultado_serialnumber.configure(text="--------")
                 self.label_resultado_usuario.configure(text="--------")
             else:
-                pesquisa_id = f"SELECT id FROM produtos WHERE modelo = '{result_modelo[0][0]}';"
+                pesquisa_id = f"SELECT id FROM Produtos WHERE modelo = '{result_modelo[0][0]}';"
                 result_id = dql(pesquisa_id)
 
                 pesquisa_serial = f"SELECT COUNT(*) FROM status WHERE serial_number = '{serial_caixa}' AND operacao = " \
@@ -1163,7 +1416,7 @@ class Saida(tk.Frame):
                     self.label_condicao.config(text="SERIAL JÁ\nEXISTE", foreground="orange", width=12,
                                                font=('Calibri', 24, 'bold'))
                     self.label_resultado_modelo.configure(text=f"{modelo}")
-                    self.label_resultado_partnumber.configure(text="--------")
+                    self.label_resultado_serialnumber.configure(text="--------")
                     self.label_resultado_usuario.configure(text="--------")
                     self.label_resultado_total.configure(text="--------")
                 elif result_serial2[0][0] == 0:
@@ -1171,14 +1424,14 @@ class Saida(tk.Frame):
                     self.label_condicao.config(text="SERIAL SEM\n ENTRADA", foreground="red", width=12,
                                                font=('Calibri', 24, 'bold'))
                     self.label_resultado_modelo.configure(text="--------")
-                    self.label_resultado_partnumber.configure(text="--------")
+                    self.label_resultado_serialnumber.configure(text="--------")
                     self.label_resultado_usuario.configure(text="--------")
                     self.label_resultado_total.configure(text="--------")
                 else:
                     winsound.PlaySound("Sons/ok.wav", winsound.SND_ASYNC)
                     self.label_condicao.config(text="OK", foreground="green", width=10, font=('Calibri', 28, 'bold'))
                     self.label_resultado_modelo.configure(text=f"{modelo}")
-                    self.label_resultado_partnumber.configure(text=f"{part_number}")
+                    self.label_resultado_serialnumber.configure(text=f"{serial_number}")
                     self.label_resultado_usuario.configure(textvariable=self.label_text)
                     self.label_resultado_total.configure(text=total_modelos_diario)
 
@@ -1212,7 +1465,7 @@ class Saida(tk.Frame):
             self.label_condicao.config(text="SERIAL\nDIFERENTE", foreground="#14b6f1", width=10,
                                        font=('Calibri', 28, 'bold'))
             self.label_resultado_modelo.configure(text="--------")
-            self.label_resultado_partnumber.configure(text="--------")
+            self.label_resultado_serialnumber.configure(text="--------")
             self.label_resultado_usuario.configure(text="--------")
         else:
             self.label_condicao.config(text="NG", foreground="red")
@@ -1227,7 +1480,7 @@ class Saida(tk.Frame):
 
     def popular_entrada_saida(self):
         agora = datetime.now()
-        emissao = agora.strftime("%d/%m/%Y")
+        emissao = agora.strftime("%Y-%m-%d")
 
         self.tv.delete(*self.tv.get_children())
         comando = f"SELECT modelo, operacao FROM status WHERE emissao = '{emissao}';"
@@ -1237,7 +1490,7 @@ class Saida(tk.Frame):
 
     def atualizar_resultados(self):
         agora = datetime.now()
-        emissao = agora.strftime("%d/%m/%Y")
+        emissao = agora.strftime("%Y-%m-%d")
         pesquisa = f"""SELECT serial_number, operacao FROM status WHERE emissao = '{emissao}' 
                     ORDER BY serial_number, operacao;"""
         resultado = dql(pesquisa)
@@ -1264,7 +1517,7 @@ class Saida(tk.Frame):
         self.pendentes_resultado.configure(text=str(pendentes))
 
     def auto_foco(self):
-        self.entry_produto.focus_set()
+        self.entry_caixa.focus_set()
 
 
 class Status(tk.Frame):
@@ -1474,7 +1727,7 @@ class Status(tk.Frame):
         self.atualizar_treeview(self.modelos)
 
     def atualizar_data_hora(self):
-        agora = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+        agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if self.data_hora:
             self.data_hora.config(text=agora)
             self.data_hora.after(1000, self.atualizar_data_hora)
@@ -1764,7 +2017,7 @@ class Modelos(tk.Frame):
         self.botao_historico.place(x=950, y=690)
 
     agora = datetime.now()
-    agora_str = agora.strftime("%d/%m/%Y")
+    agora_str = agora.strftime("%Y-%m-%d")
 
     # Funções
 
@@ -1776,11 +2029,9 @@ class Modelos(tk.Frame):
             self.tv.insert("", END, values=i)
 
     def adicionar(self):
-        # Extrair o part number do número serial
         serial = self.serial_number.get()
         part_number = serial[15:]
 
-        # Verificar se todos os campos foram preenchidos
         if not self.modelo.get() or not self.serial_number.get():
             messagebox.showerror(title='Erro', message='Digite todos os dados')
             return
@@ -1792,7 +2043,6 @@ class Modelos(tk.Frame):
             messagebox.showerror(title='Erro', message=f'Erro ao inserir: {e}')
             return
 
-        # Limpar os campos e atualizar a lista de produtos
         messagebox.showinfo(title='Sucesso', message='Produto inserido com sucesso')
         self.popular()
         self.modelo.delete(0, tk.END)
@@ -1800,7 +2050,7 @@ class Modelos(tk.Frame):
         self.modelo.focus()
 
     def inserir_produto(self, modelo, part_number, cadastragem):
-        comando = f"INSERT INTO Produtos (Modelo, Part_Number, Cadastragem) \
+        comando = f"INSERT INTO Produtos (modelo, part_number, cadastragem) \
                     VALUES ('{modelo}', '{part_number}', '{cadastragem}')"
         dml(comando)
 
@@ -1809,7 +2059,7 @@ class Modelos(tk.Frame):
         valores = self.tv.item(item, 'values')
         e_id = valores[0]
         try:
-            comando = f'DELETE FROM Produtos WHERE ID="{e_id}"'
+            comando = f'DELETE FROM Produtos WHERE id="{e_id}"'
             dml(comando)
         except:
             messagebox.showinfo(title='Erro', message='Erro ao Deletar')
@@ -1818,20 +2068,20 @@ class Modelos(tk.Frame):
 
     def filtrar(self, event):
         self.tv.delete(*self.tv.get_children())
-        comando = "SELECT * FROM Produtos  WHERE Modelo LIKE '%" + self.pesquisar.get() + "%'"
+        comando = "SELECT * FROM Produtos  WHERE modelo LIKE '%" + self.pesquisar.get() + "%'"
         linhas = dql(comando)
         for i in linhas:
             self.tv.insert("", "end", values=i)
 
     def filtrar_dados(self):
         self.tv.delete(*self.tv.get_children())
-        comando = "SELECT * FROM Produtos  WHERE Modelo LIKE '%" + self.pesquisar.get() + "%'"
+        comando = "SELECT * FROM Produtos WHERE modelo LIKE '%" + self.pesquisar.get() + "%'"
         linhas = dql(comando)
         for i in linhas:
             self.tv.insert("", "end", values=i)
 
     def atualizar_data_hora(self):
-        agora = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+        agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if self.data_hora:
             self.data_hora.config(text=agora)
             self.data_hora.after(1000, self.atualizar_data_hora)
@@ -2067,9 +2317,9 @@ class Historico(tk.Frame):
 
     def pData(self):
         dt = self.dataI.get_date()
-        s = dt.strftime("%d/%m/%Y")
+        s = dt.strftime("%Y-%m-%d")
         dt2 = self.dataF.get_date()
-        f = dt2.strftime("%d/%m/%Y")
+        f = dt2.strftime("%Y-%m-%d")
         self.tv.delete(*self.tv.get_children())
         comando = f"SELECT * FROM historico WHERE entrada BETWEEN '{s}' AND '{f}'"
         linha = dql(comando)
@@ -2078,7 +2328,7 @@ class Historico(tk.Frame):
             self.tv.insert("", "end", values=i)
 
     def atualizar_data_hora(self):
-        agora = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+        agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if self.data_hora:
             self.data_hora.config(text=agora)
             self.data_hora.after(1000, self.atualizar_data_hora)
